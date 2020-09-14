@@ -1,0 +1,19 @@
+Bitmap Testing Notes
+12 SEP:
+-Two devices can connect with each other on Bluetooth using AsyncTasks
+-Reobtained ability to send messages to the InfoThread
+-Can read characters sent by other device. But only characters. 
+
+13 SEP:
+-Successfully retooled Threads to allow for background processing of InfoExchangeThread (do NOT make new runnables inside new threads when starting them or they will run in the main thread!!!)
+
+14 SEP:
+-The application will check for new sent messages every second
+-Basic functionality established. A ListView keeps track of all messages received (yes, only received..currently) by the other person and can be deleted.
+-Toast messages added to inform user when connectivity has been established and lost.
+-Allows the user to select which device to connect to, vice being hardwired to one MAC address (Note: The devices in question must be paired in Bluetooth first!!)
+
+
+**Follow On Plans:**
+-Allow the ListView to maintain a record of the entire conversation (with a record of which user said what)
+-Fix Egyptian Rat Screw game or find another means to integrate this Bluetooth wireless interface to...
