@@ -1,5 +1,6 @@
 package kevin.park.bluetoothcomms;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.bluetooth.BluetoothAdapter;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -57,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Initialize();
+        if(savedInstanceState != null){
+            messages = (List<String>) savedInstanceState.getSerializable("MESSAGELOG");
+            adapter = new MessageAdapter(getApplicationContext(), messages);
+            listView.setAdapter(adapter);
+        }
         r.run();
     }
 
@@ -162,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         initialized = true;
     }
 
+    /* Not used in this application
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -170,15 +178,13 @@ public class MainActivity extends AppCompatActivity {
                 mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 String deviceName = mDevice.getName();
                 String deviceHardwareAddress = mDevice.getAddress(); // MAC address
-                Log.d("HELPME", deviceName);
-                Log.d("HELPME", deviceHardwareAddress);
             }
         }
-    };
+    }; */
 
     public void bluetoothSetup(){
         filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(receiver, filter);
+        //registerReceiver(receiver, filter);
         //Shouldn't need to do this unless I actually need to discover devices
         mAdapter.startDiscovery();
     }
@@ -215,7 +221,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(receiver);
+        //unregisterReceiver(receiver);
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("MESSAGELOG", (Serializable) messages);
     }
 
     //Checks for new messages once a second
