@@ -1,4 +1,4 @@
-package kevin.park.bluetoothcomms;
+package kevin.park.connectfour;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -6,14 +6,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -29,17 +28,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import kevin.park.bluetoothcomms.ui.MessageAdapter;
-import kevin.park.bluetoothcomms.ui.NothingSelectedSpinnerAdapter;
+import kevin.park.connectfour.ui.GameBoard;
+import kevin.park.connectfour.ui.MessageAdapter;
+import kevin.park.connectfour.ui.NothingSelectedSpinnerAdapter;
 
 public class MainActivity extends AppCompatActivity {
+    //Main Menu Stuff
+    Button start1p_button;
+    Button start2p_button;
+    //Note: ConnectButton is shared here
+
+    //Gesture Stuff
+    GestureDetector gestureDetector;
+
+    //Debug variables
+    boolean troubleshooting = false;
+
+    //Connection Stuff
     TextView titleView;
     ListView listView;
     Spinner spinner;
     Button searchButton;
     Button hostButton;
     Button connectButton;
-    Button sendButton;
+    Button backButton;
     Button clearButton;
     EditText messageInput;
     BluetoothDevice mDevice;
@@ -54,17 +66,89 @@ public class MainActivity extends AppCompatActivity {
     boolean initialized = false; boolean connected = false;
     MessageAdapter adapter;
 
+    //Game Stuff
+    Button checkButton;
+    Button resetButton;
+    TextView statusView;
+    GameBoard gb;
+    boolean p1gamestarted = false;
+    boolean p2gamestarted = false;
+    int turn; int player_id = 1; //Currently locked at 1
+    boolean game_initialized = false;
+    boolean winner;
+    //Overridden Methods
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Initialize();
+        setContentView(R.layout.main_menu);
+        InitializeMainMenu();
+        //Initialize();
+        /*
         if(savedInstanceState != null){
             messages = (List<String>) savedInstanceState.getSerializable("MESSAGELOG");
             adapter = new MessageAdapter(getApplicationContext(), messages);
             listView.setAdapter(adapter);
+        } */
+        //r.run();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent e) {
+        if(game_initialized) {
+            return gestureDetector.onTouchEvent(e);
         }
-        r.run();
+        return false;
+    }
+
+    GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
+        @Override
+        public boolean onDoubleTap(MotionEvent e) {
+            if(game_initialized && !winner){ //Add a turn == player_id function for multiplayer games..
+                winner = checkForWin(playChecker(checkForColumn(e.getX(), e.getY())));
+            }
+            if(winner){Log.d("HELPME WINNNN","SOMEONE WON");
+                resetButton.setVisibility(View.VISIBLE);
+                if(turn == 1){
+                    statusView.setText("BLACK WINS");
+                }
+                if(turn == 2){
+                    statusView.setText("RED WINS");
+                }
+            }
+            return super.onDoubleTap(e);
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //unregisterReceiver(receiver);
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("MESSAGELOG", (Serializable) messages);
+    }
+
+    //Checks for new messages once a second
+    Runnable r = new Runnable() {
+        @Override
+        public void run() {
+            h.postDelayed(r, 1000);
+            checkIfConnected();
+            checkForMessages();
+            if(p1gamestarted){checkforp1move();}
+        }
+    };
+
+    //Bluetooth and Menu Methods
+
+    public void backtomain(){
+        setContentView(R.layout.main_menu);
+        InitializeMainMenu();
     }
 
     public void checkForMessages() {
@@ -104,6 +188,12 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
     }
 
+    public void connect(){
+        setContentView(R.layout.connect_menu);
+        Initialize();
+        r.run();
+    }
+
     public void Initialize(){
         messages = new ArrayList<String>();
         devices = new ArrayList<String>();
@@ -115,9 +205,8 @@ public class MainActivity extends AppCompatActivity {
         searchButton = findViewById(R.id.findButton);
         hostButton = findViewById(R.id.hostButton);
         connectButton = findViewById(R.id.connectButton);
-        sendButton = findViewById(R.id.send_button);
+        backButton = findViewById(R.id.back_button);
         clearButton = findViewById(R.id.clearButton);
-        messageInput = findViewById(R.id.messageSend);
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         spinner = findViewById(R.id.connectSpinner);
         h = new Handler();
@@ -151,11 +240,12 @@ public class MainActivity extends AppCompatActivity {
                 else{Toast.makeText(getApplicationContext(),"Select a device to connect to first.",Toast.LENGTH_SHORT).show();}
             }
         });
-        sendButton.setOnClickListener(new View.OnClickListener() {
+        backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMessage();
-                messageInput.setText(" ");
+                //sendMessage();
+                //messageInput.setText(" ");
+                backtomain();
             }
         });
 
@@ -169,18 +259,29 @@ public class MainActivity extends AppCompatActivity {
         initialized = true;
     }
 
-    /* Not used in this application
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if(BluetoothDevice.ACTION_FOUND.equals(action)){
-                mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String deviceName = mDevice.getName();
-                String deviceHardwareAddress = mDevice.getAddress(); // MAC address
+    public void InitializeMainMenu(){
+        start1p_button = findViewById(R.id.start1pgame);
+        start2p_button = findViewById(R.id.start2pgame);
+        connectButton = findViewById(R.id.connectmenu);
+        connectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                connect();
             }
-        }
-    }; */
+        });
+        start2p_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                start_2pgame();
+            }
+        });
+        start1p_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                start_1pgame();
+            }
+        });
+    }
 
     public void bluetoothSetup(){
         filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -218,27 +319,77 @@ public class MainActivity extends AppCompatActivity {
         mDevice = mAdapter.getRemoteDevice(addresses.get(spinner.getSelectedItemPosition()-1));
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //unregisterReceiver(receiver);
+    //Game Methods
 
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable("MESSAGELOG", (Serializable) messages);
-    }
-
-    //Checks for new messages once a second
-    Runnable r = new Runnable() {
-        @Override
-        public void run() {
-        h.postDelayed(r, 1000);
-        checkIfConnected();
-        checkForMessages();
+    public int checkForColumn(float x, float y){
+        int xoffset = gb.getXOffset();
+        int colwdth = 140;
+        int colmax = 7;
+        int column_selected = -1;
+        for(int i = 0; i < colmax; i++){
+            if(x >= xoffset+(i)*colwdth && x < xoffset+(i+1)*colwdth){
+                column_selected = i+1;
+            }
         }
-    };
+        return column_selected;
+    }
+
+    public void checkforp1move(){
+
+    }
+
+    public boolean checkForWin(int played){
+        return gb.checkForWin(played, turn);
+    }
+
+    public void checkValues(){
+        if(troubleshooting){gb.checkValues();}
+    }
+
+    public int playChecker(int i){
+        int coord = 0;
+        coord = gb.playChecker(turn, i);
+        if(turn == 1){turn = 2;}
+        else if(turn == 2){turn = 1;}
+        return coord;
+    }
+
+    public void resetGame(){
+        gb.resetGame();
+        winner = false;
+        resetButton.setVisibility(View.INVISIBLE);
+        statusView.setText(" ");
+    }
+
+    public void start_1pgame(){
+        setContentView(R.layout.game_map);
+        gb = findViewById(R.id.gameboard);
+        statusView = findViewById(R.id.statusView);
+        checkButton = findViewById(R.id.checkbutton);
+        checkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkValues();
+            }
+        });
+        resetButton = findViewById(R.id.resetButton);
+        resetButton.setVisibility(View.INVISIBLE);
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetGame();
+            }
+        });
+        if(!troubleshooting){checkButton.setVisibility(View.INVISIBLE);}
+        gestureDetector = new GestureDetector(this, gestureListener);
+        p1gamestarted = true; turn = 1;
+        game_initialized = true;
+    }
+
+    public void start_2pgame(){
+        setContentView(R.layout.game_map);
+        p2gamestarted = true;
+    }
+
 
 }

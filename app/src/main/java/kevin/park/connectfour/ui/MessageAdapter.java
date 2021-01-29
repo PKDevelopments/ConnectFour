@@ -1,4 +1,4 @@
-package kevin.park.bluetoothcomms.ui;
+package kevin.park.connectfour.ui;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-import kevin.park.bluetoothcomms.R;
+import kevin.park.connectfour.R;
 
 public class MessageAdapter extends BaseAdapter {
     public Context mContext;

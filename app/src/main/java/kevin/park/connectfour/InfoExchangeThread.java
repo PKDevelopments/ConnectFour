@@ -1,4 +1,4 @@
-package kevin.park.bluetoothcomms;
+package kevin.park.connectfour;
 
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;

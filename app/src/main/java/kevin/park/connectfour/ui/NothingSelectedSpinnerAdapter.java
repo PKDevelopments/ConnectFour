@@ -1,4 +1,4 @@
-package kevin.park.bluetoothcomms.ui;
+package kevin.park.connectfour.ui;
 
 import android.content.Context;
 import android.database.DataSetObserver;

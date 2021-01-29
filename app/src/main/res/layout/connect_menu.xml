@@ -18,22 +18,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:text="Status: Not Connected."
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/messageSend"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <EditText
-        android:id="@+id/messageSend"
-        android:layout_width="257dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="8dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toTopOf="@+id/findButton"
+        app:layout_constraintBottom_toTopOf="@+id/back_button"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
@@ -66,14 +54,14 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/send_button"
-        android:layout_width="wrap_content"
+        android:id="@+id/back_button"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="28dp"
-        android:text="send"
+        android:layout_marginBottom="8dp"
+        android:text="BACK "
+        app:layout_constraintBottom_toTopOf="@+id/findButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/messageSend"
-        app:layout_constraintTop_toTopOf="@+id/messageSend" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/clearButton"
@@ -89,7 +77,7 @@
         android:layout_width="184dp"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/send_button"
+        app:layout_constraintBottom_toTopOf="@+id/back_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/titleView" />
 

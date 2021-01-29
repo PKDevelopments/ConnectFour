@@ -1,4 +1,4 @@
-package kevin.park.bluetoothcomms;
+package kevin.park.connectfour;
 
 import org.junit.Test;
 
