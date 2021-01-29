@@ -10,6 +10,8 @@ Plan:
 -Added method to check for all win conditions (because connect4 is not difficult to begin with...)
  **Note: If a player has checkers arranged in a manner such as 37,35,34,36 (in that order), a win condition will falsely be triggered. 
 -Added reset button
+-Bluetooth implementation successful...needs more testing though
+-Reset works... probably
 
 28 JAN 21:
 -Added new class GameBoard to display... the game board
@@ -38,3 +40,7 @@ Columns for this are 77 pixels wide...
 
 row = coord%7 (if coord%7 == 0, subtract 1)
 
+Resolving Input/Outputstream data:
+-Consider parsing the values required out of the Stream...
+-Example:
+if output is coor:24,other:3 then parse the coor: and ,other: out and extract the values
