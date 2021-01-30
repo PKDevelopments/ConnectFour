@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
     int turn; int player_id = 1; //Currently locked at 1
     boolean game_initialized = false;
     boolean winner;
+    int next_turn;
     //Overridden Methods
 
     @Override
@@ -109,23 +110,26 @@ public class MainActivity extends AppCompatActivity {
             }
             if(winner){Log.d("HELPME WINNNN","SOMEONE WON");
                 resetButton.setVisibility(View.VISIBLE);
-                if(turn == player_id){
-                    statusView.setText("YOU WIN");
+                if(p1gamestarted){
+                    if(turn == 2){
+                        statusView.setText("RED WINS");
+                    }
+                    if(turn == 1){
+                        statusView.setText("BLACK WINS");
+                    }
                 }
-                if(turn != player_id){
-                    statusView.setText("YOU LOSE");
+                if(p2gamestarted){
+                    if(turn == player_id){
+                        statusView.setText("YOU WIN"); next_turn = 1;
+                    }
+                    if(turn != player_id){
+                        statusView.setText("YOU LOSE"); next_turn = 2;
+                    }
                 }
             }
             return super.onDoubleTap(e);
         }
     };
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        //unregisterReceiver(receiver);
-
-    }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -171,10 +175,14 @@ public class MainActivity extends AppCompatActivity {
                 reset = true;
                 gb.resetGame();
                 resetButton.setVisibility(View.INVISIBLE);
-                turn = 2; //Replace this with a random function btwn 1 and 2
+                turn = next_turn; //Winner Goes First / Is Red
                 winner = false;
-                if(turn == player_id){statusView.setText("Your turn.");}
-                else{statusView.setText("Other Player's Turn.");}
+                if(p1gamestarted && !winner){
+                    if(turn == 1){statusView.setText("RED turn.");}
+                    else{statusView.setText("BLACK Turn.");}}
+                if(p2gamestarted && !winner){
+                    if(turn == player_id){statusView.setText("Your turn.");}
+                    else{statusView.setText("Other Player's Turn.");}}
             }
             if(!reset && message != null && message.length() > 0){
                 left = message.indexOf("(");
@@ -187,11 +195,21 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if(winner){Log.d("HELPME WINNNN","SOMEONE WON");
                     resetButton.setVisibility(View.VISIBLE);
-                    if(turn == 1){
-                        statusView.setText("BLACK WINS");
+                    if(p1gamestarted){
+                        if(turn == 1){
+                            statusView.setText("RED WINS");
+                        }
+                        if(turn != 2){
+                            statusView.setText("BLACK WINS");
+                        }
                     }
-                    if(turn == 2){
-                        statusView.setText("RED WINS");
+                    if(p2gamestarted){
+                        if(turn == player_id){
+                            statusView.setText("YOU WIN"); next_turn = 2;
+                        }
+                        if(turn != player_id){
+                            statusView.setText("YOU LOSE"); next_turn = 1;
+                        }
                     }
                 }
             }
@@ -355,7 +373,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setDevice(){
-        mDevice = mAdapter.getRemoteDevice(addresses.get(spinner.getSelectedItemPosition()-1));
+        if(spinner.getSelectedItemPosition() > 0){mDevice = mAdapter.getRemoteDevice(addresses.get(spinner.getSelectedItemPosition()-1));
+        Toast.makeText(getApplicationContext(),mDevice.getName()+" selected",Toast.LENGTH_SHORT).show();
+        }
+        else{Toast.makeText(getApplicationContext(),"Select a Device then Press \"Find Devices\".",Toast.LENGTH_SHORT).show();}
     }
 
     //Game Methods
@@ -392,18 +413,26 @@ public class MainActivity extends AppCompatActivity {
         if(p2gamestarted && turn == player_id){sendBoardData(piececoord);}
         if(turn == 1){turn = 2;}
         else if(turn == 2){turn = 1;}
-        if(turn == player_id){statusView.setText("Your turn.");}
-        else{statusView.setText("Other Player's Turn.");}
+        if(p1gamestarted && !winner){
+            if(turn == 1){statusView.setText("RED turn.");}
+            else{statusView.setText("BLACK Turn.");}}
+        if(p2gamestarted && !winner){
+            if(turn == player_id){statusView.setText("Your turn.");}
+            else{statusView.setText("Other Player's Turn.");}}
         return coord;
     }
 
     public void resetGame(){
         gb.resetGame();
-        sendResetData("RESET");
+        if(p2gamestarted){sendResetData("RESET");}
         winner = false;
         resetButton.setVisibility(View.INVISIBLE);
-        if(turn == player_id){statusView.setText("Your turn.");}
-        else{statusView.setText("Other Player's Turn.");}
+        if(p1gamestarted && !winner){
+            if(turn == 1){statusView.setText("RED turn.");}
+            else{statusView.setText("BLACK Turn.");}}
+        if(p2gamestarted && !winner){
+            if(turn == player_id){statusView.setText("Your turn.");}
+            else{statusView.setText("Other Player's Turn.");}}
     }
 
     public void start_1pgame(){
@@ -428,9 +457,12 @@ public class MainActivity extends AppCompatActivity {
         if(!troubleshooting){checkButton.setVisibility(View.INVISIBLE);}
         gestureDetector = new GestureDetector(this, gestureListener);
         p1gamestarted = true; turn = 1;
-        if(turn == player_id){statusView.setText("Your turn.");}
-        else{statusView.setText("Other Player's Turn.");}
-        Log.d("HELPME",""+player_id);
+        if(p1gamestarted && !winner){
+            if(turn == 1){statusView.setText("RED turn.");}
+            else{statusView.setText("BLACK Turn.");}}
+        if(p2gamestarted && !winner){
+            if(turn == player_id){statusView.setText("Your turn.");}
+            else{statusView.setText("Other Player's Turn.");}}
         game_initialized = true;
     }
 
@@ -457,8 +489,12 @@ public class MainActivity extends AppCompatActivity {
             if(!troubleshooting){checkButton.setVisibility(View.INVISIBLE);}
             gestureDetector = new GestureDetector(this, gestureListener);
             p2gamestarted = true; turn = 1;
-            if(turn == player_id){statusView.setText("Your turn.");}
-            else{statusView.setText("Other Player's Turn.");}
+            if(p1gamestarted && !winner){
+                if(turn == 1){statusView.setText("RED turn.");}
+                else{statusView.setText("BLACK Turn.");}}
+            if(p2gamestarted && !winner){
+                if(turn == player_id){statusView.setText("Your turn.");}
+                else{statusView.setText("Other Player's Turn.");}}
             Log.d("HELPME",""+player_id);
             game_initialized = true;}
         else{Toast.makeText(MainActivity.this, "Connect to another device first.",Toast.LENGTH_SHORT).show();}
